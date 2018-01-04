@@ -1,0 +1,35 @@
+{
+  "name": "purescript-chronicle",
+  "version": "0.0.1",
+  "description": "n/a",
+  "private": true,
+  "keywords": [
+    "purescript",
+    "logging",
+    "chronicle"
+  ],
+  "scripts": {
+    "postinstall": "bower install",
+    "postupdate": "bower update",
+    "clean-output": "rm -rf output/",
+    "clean-dependencies": "rm -rf .psci_modules/ .pulp-cache/ bower_components/ node_modules/",
+    "clean-all": "npm run clean-output && npm run clean-dependencies",
+    "build": "pulp build",
+    "test": "pulp test",
+    "main": "pulp test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://ogtek.com/sccs/purescript-chronicle.git"
+  },
+  "bugs": {
+    "url": "http://ogtek.com/issues/purescript-chronicle"
+  },
+  "engines": {
+    "node": "^7.0.0"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+  }
+}

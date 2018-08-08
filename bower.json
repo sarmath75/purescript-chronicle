@@ -7,14 +7,14 @@
     "output"
   ],
   "dependencies": {
-    "purescript-console": "^3.0.0",
-    "purescript-formatters": "^3.0.0",
-    "purescript-logging": "^2.0.0",
-    "purescript-now": "^3.0.0"
+    "purescript-console": "^4.0.0",
+    "purescript-formatters": "^4.0.0",
+    "purescript-logging": "^3.0.0",
+    "purescript-now": "^4.0.0"
   },
   "devDependencies": {
-    "purescript-debug": "^3.0.0",
-    "purescript-psci-support": "^3.0.0",
-    "purescript-spec-discovery": "^1.0.0"
+    "purescript-debug": "^4.0.0",
+    "purescript-psci-support": "^4.0.0",
+    "purescript-spec-discovery": "https://github.com/owickstrom/purescript-spec-discovery.git#a1a8dfd5fadb3f00199d68d20af4bbf56a048c6e"
   }
 }

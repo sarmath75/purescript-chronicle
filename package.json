@@ -26,7 +26,7 @@
     "url": "http://ogtek.com/issues/purescript-chronicle"
   },
   "engines": {
-    "node": "^7.0.0"
+    "node": "^8.0.0"
   },
   "dependencies": {
   },

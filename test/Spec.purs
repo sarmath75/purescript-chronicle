@@ -2,13 +2,12 @@ module Test.Main where
 
 import Prelude
 
-import Control.Monad.Eff (Eff)
-import Node.FS (FS)
+import Effect (Effect)
 import Test.Spec.Discovery (discover)
 import Test.Spec.Reporter (consoleReporter)
-import Test.Spec.Runner (RunnerEffects, defaultConfig, run')
+import Test.Spec.Runner (defaultConfig, run')
 
-main :: forall eff. Eff (RunnerEffects (fs :: FS | eff)) Unit
+main :: forall eff. Effect Unit
 main = do
   let pattern = "Chronicle*Spec"
       config = defaultConfig

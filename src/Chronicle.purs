@@ -4,13 +4,13 @@ import Prelude
 
 import Control.Logger (Logger(..), cfilter)
 import Control.Logger as Logger
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Console (CONSOLE)
-import Control.Monad.Eff.Console as Console
-import Control.Monad.Eff.Now (NOW, now)
-import Control.Monad.Eff.Ref (REF, Ref, modifyRef, newRef, readRef, writeRef)
-import Control.Monad.Eff.Unsafe (unsafePerformEff)
+import Effect (Effect)
+import Effect.Class (liftEffect)
+import Effect.Console as Console
+import Effect.Now (now)
+import Effect.Ref (Ref)
+import Effect.Ref as Ref
+import Effect.Unsafe (unsafePerformEffect)
 import Data.DateTime.Instant (Instant)
 import Data.DateTime.Instant as Instant
 import Data.Either (fromRight)
@@ -66,24 +66,18 @@ type ChronicleLocation =
   { file :: String
   , line :: Int }
 
-type ChronicleEffs eff =
-  ( console :: CONSOLE
-  , now :: NOW
-  , ref :: REF
-  | eff )
+type ChronicleEnv = {logger :: Logger Effect ChronicleEntry}
 
-type ChronicleEnv eff = {logger :: Logger (Eff (ChronicleEffs eff)) ChronicleEntry}
-
-type ChronicleOpts eff =
-  { logger :: Logger (Eff (ChronicleEffs eff)) ChronicleEntry
+type ChronicleOpts =
+  { logger :: Logger Effect ChronicleEntry
   , root :: ChronicleLevel
   , levels :: Array (Tuple String ChronicleLevel) }
 
 -- | Resets environment.
-reset :: forall eff. ChronicleOpts eff -> Eff (ChronicleEffs eff) Unit
+reset :: ChronicleOpts -> Effect Unit
 reset {logger, root, levels} = do
   let logger' = cfilter predicate logger
-  writeRef __env__ {logger: logger'}
+  Ref.write {logger: logger'} __env__
   where
     predicate :: ChronicleEntry -> Boolean
     predicate (ChronicleEntry {level, file}) =
@@ -92,52 +86,52 @@ reset {logger, root, levels} = do
         entries = Map.fromFoldable levels
 
 -- | Default options.
-defaultOpts :: forall eff. ChronicleOpts eff
+defaultOpts :: ChronicleOpts
 defaultOpts =
   { logger: consoleLogger show
   , root: WARN
   , levels: [] }
 
 -- | Write a message.
-log :: forall eff. ChronicleLocation -> String -> Eff (ChronicleEffs eff) Unit
+log :: ChronicleLocation -> String -> Effect Unit
 log location message = log' DEBUG location message
 
 -- | Write a value using its `Show` instance to produce a `String`.
-logShow :: forall a eff. Show a => ChronicleLocation -> a -> Eff (ChronicleEffs eff) Unit
+logShow :: forall a. Show a => ChronicleLocation -> a -> Effect Unit
 logShow location a = log' DEBUG location (show a)
 
 -- | Write an info message.
-info :: forall eff. ChronicleLocation -> String -> Eff (ChronicleEffs eff) Unit
+info :: ChronicleLocation -> String -> Effect Unit
 info location message = log' INFO location message
 
 -- | Write an info value using its `Show` instance to produce a `String`.
-infoShow :: forall a eff. Show a => ChronicleLocation ->  a -> Eff (ChronicleEffs eff) Unit
+infoShow :: forall a. Show a => ChronicleLocation ->  a -> Effect Unit
 infoShow location a = log' INFO location (show a)
 
 -- | Write a warning message.
-warn :: forall eff. ChronicleLocation -> String -> Eff (ChronicleEffs eff) Unit
+warn :: ChronicleLocation -> String -> Effect Unit
 warn location message = log' WARN location message
 
 -- | Write an warning value, using its `Show` instance to produce a `String`.
-warnShow :: forall a eff. Show a => ChronicleLocation -> a -> Eff (ChronicleEffs eff) Unit
+warnShow :: forall a. Show a => ChronicleLocation -> a -> Effect Unit
 warnShow location a = log' WARN location (show a)
 
 -- | Write an error message.
-error :: forall eff. ChronicleLocation -> String -> Eff (ChronicleEffs eff) Unit
+error :: ChronicleLocation -> String -> Effect Unit
 error location message = log' ERROR location message
 
 -- | Write an error value, using its `Show` instance to produce a `String`.
-errorShow :: forall a eff. Show a => ChronicleLocation -> a -> Eff (ChronicleEffs eff) Unit
+errorShow :: forall a. Show a => ChronicleLocation -> a -> Effect Unit
 errorShow location a = log' ERROR location (show a)
 
 -- | Write a message.
-log' :: forall eff. ChronicleLevel -> ChronicleLocation -> String -> Eff (ChronicleEffs eff) Unit
+log' :: ChronicleLevel -> ChronicleLocation -> String -> Effect Unit
 log' level {file, line} message = do
-  {logger} <- readRef __env__
-  instant <- liftEff now
-  liftEff $ Logger.log logger (ChronicleEntry {instant, level, file, line, message})
+  {logger} <- Ref.read __env__
+  instant <- liftEffect now
+  liftEffect $ Logger.log logger (ChronicleEntry {instant, level, file, line, message})
 
-consoleLogger :: forall eff. (ChronicleEntry -> String) -> Logger (Eff (console :: CONSOLE | eff)) ChronicleEntry
+consoleLogger :: (ChronicleEntry -> String) -> Logger Effect ChronicleEntry
 consoleLogger format = Logger \entry@(ChronicleEntry {level}) -> case level of
   DEBUG ->
    Console.log $ format entry
@@ -148,9 +142,9 @@ consoleLogger format = Logger \entry@(ChronicleEntry {level}) -> case level of
   ERROR ->
     Console.error $ format entry
 
-listLogger :: forall eff. Ref (List ChronicleEntry) -> Logger (Eff (ref :: REF | eff)) ChronicleEntry
+listLogger :: Ref (List ChronicleEntry) -> Logger Effect ChronicleEntry
 listLogger ref = Logger \entry -> do
-  modifyRef ref \entries -> List.snoc entries entry
+  Ref.modify_ (\entries -> List.snoc entries entry) ref
 
-__env__ :: forall eff. Ref (ChronicleEnv eff)
-__env__ = unsafePerformEff $ newRef {logger: consoleLogger show}
+__env__ :: Ref ChronicleEnv
+__env__ = unsafePerformEffect $ Ref.new {logger: consoleLogger show}
